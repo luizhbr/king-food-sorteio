@@ -76,8 +76,10 @@ export default async function handler(req) {
     return new Response(null, { status: 204, headers: corsHeaders() })
   }
 
-  const url = new URL(req.url)
-  const path = url.pathname.replace('/api', '')
+  const url = new URL(req.url, 'https://kingfoodsorteio.online')
+  let path = url.pathname.replace('/api', '')
+  const rawPath = url.searchParams.get('path') || ''
+  if (rawPath) path = '/' + rawPath.split('/').filter(Boolean).join('/')
 
   try {
     if (path === '/register' && req.method === 'POST') {
