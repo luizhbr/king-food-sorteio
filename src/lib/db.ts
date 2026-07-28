@@ -65,11 +65,22 @@ export async function registerParticipant(
 
   if (data.error) throw new Error(data.error)
 
-  if (data.existingNumber) {
-    return { success: false, existingNumber: data.existingNumber }
+  // API returns { duplicate: true, raffleNumber } for existing
+  if (data.duplicate) {
+    return { success: false, existingNumber: data.raffleNumber }
   }
 
-  return { success: true, participant: data.participant }
+  // API returns { success: true, raffleNumber } for new
+  return {
+    success: true,
+    participant: {
+      id: '',
+      name,
+      whatsapp,
+      raffle_number: data.raffleNumber,
+      created_at: new Date().toISOString()
+    }
+  }
 }
 
 /** Busca todos os participantes (protegido por senha admin) */
