@@ -4,8 +4,8 @@
  */
 
 const GIST_ID = process.env.GIST_ID || ''
-const GIST_TOKEN=*** || ''
-const ADMIN_PASSWORD=*** || ''
+const GIST_TOKEN = process.env.GIST_TOKEN || ''
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || ''
 
 interface Participant {
   id: string
