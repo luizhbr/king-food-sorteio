@@ -25,13 +25,38 @@ function sanitizePhone(value: string): string {
   return value.replace(/\D/g, '')
 }
 
-/** Formata WhatsApp para exibição: (11) 98765-4321 */
-function formatPhoneDisplay(value: string): string {
-  const d = value.replace(/\D/g, '')
+/**
+ * Formata WhatsApp para exibição.
+ * Aceita formato internacional (+1 267 826 5740) e brasileiro.
+ * Não força máscara rígida — apenas agrupa dígitos.
+ */
+function formatPhoneDisplay(raw: string): string {
+  const d = sanitizePhone(raw)
+  if (d.length === 0) return ''
+  // Se começa com código do país (mais de 11 dígitos ou + na entrada)
+  if (d.length > 11) {
+    // Formato internacional: +XX XXX XXXXXXX
+    const cc = d.slice(0, d.length - 10)
+    const rest = d.slice(d.length - 10)
+    return `+${cc} ${rest.slice(0, 3)} ${rest.slice(3, 6)} ${rest.slice(6)}`
+  }
+  // Brasil: (11) 98765-4321 ou (11) 3456-7890
   if (d.length <= 2) return d
-  if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`
-  if (d.length <= 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`
+  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`
+  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`
   return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7, 11)}`
+}
+
+/**
+ * Valida WhatsApp internacional.
+ * - Apenas dígitos (após remover + e espaços)
+ * - Mínimo 8 dígitos (números locais curtos)
+ * - Máximo 15 dígitos (limite ITU-T)
+ * - Aceita qualquer DDI: +1 (EUA), +55 (BR), +44 (UK), etc.
+ */
+function isValidPhone(raw: string): boolean {
+  const d = sanitizePhone(raw)
+  return d.length >= 8 && d.length <= 15
 }
 
 export default function Home() {
@@ -52,8 +77,8 @@ export default function Home() {
       setError('Por favor, digite seu nome completo.')
       return
     }
-    if (cleanPhone.length < 10) {
-      setError('Por favor, digite um WhatsApp válido com DDD (mínimo 10 dígitos).')
+    if (!isValidPhone(cleanPhone)) {
+      setError('Digite um WhatsApp válido (mínimo 8 dígitos, com DDI se fora do Brasil).')
       return
     }
 
@@ -100,7 +125,6 @@ export default function Home() {
         throw insertError
       }
 
-      // 4. Navega para tela de sucesso
       navigate('/sucesso', { state: { raffleNumber, name: name.trim() } })
     } catch (err) {
       console.error(err)
@@ -112,14 +136,11 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col items-center px-5 pt-12 pb-8">
-      {/* Logo */}
       <Logo className="w-24 h-24 object-contain mb-3 rounded-2xl" />
 
-      {/* Título */}
       <h1 className="text-2xl font-extrabold tracking-tight mb-1">King Food</h1>
       <p className="text-kf-gold text-sm font-semibold mb-8">Sorteio</p>
 
-      {/* Card de cadastro */}
       <div className="w-full max-w-sm animate-slide-up">
         <p className="text-center text-sm text-white/50 mb-5">
           Cadastre-se e receba seu número da sorte 🎉
@@ -137,7 +158,6 @@ export default function Home() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Nome */}
           <div>
             <label className="block text-xs font-medium text-white/60 mb-1.5">
               Nome completo
@@ -153,7 +173,6 @@ export default function Home() {
             />
           </div>
 
-          {/* WhatsApp */}
           <div>
             <label className="block text-xs font-medium text-white/60 mb-1.5">
               WhatsApp
@@ -162,25 +181,23 @@ export default function Home() {
               type="tel"
               value={formatPhoneDisplay(whatsapp)}
               onChange={(e) => setWhatsapp(sanitizePhone(e.target.value))}
-              placeholder="(11) 98765-4321"
+              placeholder="+1 267 826 5740"
               disabled={loading}
               className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-kf-gold/50 focus:border-transparent transition"
               autoComplete="tel"
-              inputMode="numeric"
+              inputMode="tel"
             />
             <p className="text-xs text-white/30 mt-1">
-              Apenas números, com DDD
+              Com DDI (ex: +1 para EUA, +55 para Brasil)
             </p>
           </div>
 
-          {/* Erro */}
           {error && (
             <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-3 text-red-300 text-sm text-center">
               {error}
             </div>
           )}
 
-          {/* Botão */}
           <button
             type="submit"
             disabled={loading}
