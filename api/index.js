@@ -71,6 +71,14 @@ function jsonResponse(data, status) {
   })
 }
 
+function getHeader(req, name) {
+  if (!req.headers) return ''
+  if (typeof req.headers.get === 'function') {
+    return req.headers.get(name) || ''
+  }
+  return req.headers[name.toLowerCase()] || ''
+}
+
 export default async function handler(req) {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: corsHeaders() })
@@ -117,7 +125,7 @@ export default async function handler(req) {
     }
 
     if (path === '/participants' && req.method === 'GET') {
-      const adminPwd = req.headers.get('X-Admin-Password') || ''
+      const adminPwd = getHeader(req, 'X-Admin-Password') || ''
       if (adminPwd !== ADMIN_PASSWORD) {
         return jsonResponse({ error: 'Nao autorizado' }, 401)
       }
@@ -129,7 +137,7 @@ export default async function handler(req) {
     }
 
     if (path === '/participants' && (req.method === 'POST' || req.method === 'DELETE')) {
-      const adminPwd = req.headers.get('X-Admin-Password') || ''
+      const adminPwd = getHeader(req, 'X-Admin-Password') || ''
       if (adminPwd !== ADMIN_PASSWORD) {
         return jsonResponse({ error: 'Nao autorizado' }, 401)
       }
