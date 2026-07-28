@@ -65,22 +65,17 @@ export async function registerParticipant(
 
   if (data.error) throw new Error(data.error)
 
-  // API returns { duplicate: true, raffleNumber } for existing
-  if (data.duplicate) {
-    return { success: false, existingNumber: data.raffleNumber }
+  // Existing participant
+  if (data.existingNumber) {
+    return { success: false, existingNumber: data.existingNumber }
   }
 
-  // API returns { success: true, raffleNumber } for new
-  return {
-    success: true,
-    participant: {
-      id: '',
-      name,
-      whatsapp,
-      raffle_number: data.raffleNumber,
-      created_at: new Date().toISOString()
-    }
+  // New participant
+  if (data.success && data.participant) {
+    return { success: true, participant: data.participant }
   }
+
+  throw new Error('Resposta inesperada do servidor')
 }
 
 /** Busca todos os participantes (protegido por senha admin) */
