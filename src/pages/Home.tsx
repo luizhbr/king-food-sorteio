@@ -9,7 +9,6 @@ async function generateUniqueNumber(): Promise<string> {
     const num = Math.floor(Math.random() * 999) + 1
     const formatted = String(num).padStart(3, '0')
 
-    // Verifica se o número já existe no banco
     const { data } = await supabase
       .from('participants')
       .select('raffle_number')
@@ -26,6 +25,15 @@ function sanitizePhone(value: string): string {
   return value.replace(/\D/g, '')
 }
 
+/** Formata WhatsApp para exibição: (11) 98765-4321 */
+function formatPhoneDisplay(value: string): string {
+  const d = value.replace(/\D/g, '')
+  if (d.length <= 2) return d
+  if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`
+  if (d.length <= 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7, 11)}`
+}
+
 export default function Home() {
   const navigate = useNavigate()
   const [name, setName] = useState('')
@@ -39,7 +47,6 @@ export default function Home() {
     setError('')
     setExistingNumber(null)
 
-    // Validações
     const cleanPhone = sanitizePhone(whatsapp)
     if (name.trim().length < 2) {
       setError('Por favor, digite seu nome completo.')
@@ -78,7 +85,6 @@ export default function Home() {
         })
 
       if (insertError) {
-        // Pode ser race condition no unique constraint — tenta buscar novamente
         if (insertError.code === '23505') {
           const { data: retry } = await supabase
             .from('participants')
@@ -94,7 +100,7 @@ export default function Home() {
         throw insertError
       }
 
-      // 4. Navega para tela de sucesso passando o número
+      // 4. Navega para tela de sucesso
       navigate('/sucesso', { state: { raffleNumber, name: name.trim() } })
     } catch (err) {
       console.error(err)
@@ -105,25 +111,23 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center px-5 py-8">
+    <div className="min-h-screen flex flex-col items-center px-5 pt-12 pb-8">
       {/* Logo */}
-      <Logo className="w-24 h-24 object-contain mb-4" />
+      <Logo className="w-24 h-24 object-contain mb-3 rounded-2xl" />
 
       {/* Título */}
-      <h1 className="text-3xl font-black text-center mb-1">
-        King Food
-      </h1>
-      <p className="text-king-gold text-lg font-bold mb-6">Sorteio</p>
+      <h1 className="text-2xl font-extrabold tracking-tight mb-1">King Food</h1>
+      <p className="text-kf-gold text-sm font-semibold mb-8">Sorteio</p>
 
       {/* Card de cadastro */}
-      <div className="w-full max-w-md bg-white/10 backdrop-blur-sm rounded-2xl p-6 shadow-2xl border border-white/10">
-        <p className="text-center text-sm text-white/80 mb-5">
-          Cadastre-se e receba seu número da sorte automaticamente! 🎉
+      <div className="w-full max-w-sm animate-slide-up">
+        <p className="text-center text-sm text-white/50 mb-5">
+          Cadastre-se e receba seu número da sorte 🎉
         </p>
 
         {existingNumber && (
-          <div className="mb-4 bg-king-gold/20 border border-king-gold rounded-xl p-4 text-center">
-            <p className="text-king-gold-light font-bold text-sm">
+          <div className="mb-4 rounded-2xl border border-kf-gold/30 bg-kf-gold/10 p-4 text-center">
+            <p className="text-kf-gold font-bold text-sm">
               Você já está participando!
             </p>
             <p className="text-white text-lg font-black mt-1">
@@ -135,7 +139,7 @@ export default function Home() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Nome */}
           <div>
-            <label className="block text-sm font-medium text-white/90 mb-1.5">
+            <label className="block text-xs font-medium text-white/60 mb-1.5">
               Nome completo
             </label>
             <input
@@ -144,35 +148,34 @@ export default function Home() {
               onChange={(e) => setName(e.target.value)}
               placeholder="Digite seu nome"
               disabled={loading}
-              className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-king-gold focus:border-transparent transition"
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-kf-gold/50 focus:border-transparent transition"
               autoComplete="name"
             />
           </div>
 
           {/* WhatsApp */}
           <div>
-            <label className="block text-sm font-medium text-white/90 mb-1.5">
+            <label className="block text-xs font-medium text-white/60 mb-1.5">
               WhatsApp
             </label>
             <input
               type="tel"
-              value={whatsapp}
+              value={formatPhoneDisplay(whatsapp)}
               onChange={(e) => setWhatsapp(sanitizePhone(e.target.value))}
-              placeholder="Ex: 11987654321"
+              placeholder="(11) 98765-4321"
               disabled={loading}
-              maxLength={15}
-              className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-king-gold focus:border-transparent transition"
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-kf-gold/50 focus:border-transparent transition"
               autoComplete="tel"
               inputMode="numeric"
             />
-            <p className="text-xs text-white/50 mt-1">
+            <p className="text-xs text-white/30 mt-1">
               Apenas números, com DDD
             </p>
           </div>
 
           {/* Erro */}
           {error && (
-            <div className="bg-red-500/20 border border-red-500 rounded-xl p-3 text-red-200 text-sm text-center">
+            <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-3 text-red-300 text-sm text-center">
               {error}
             </div>
           )}
@@ -181,7 +184,7 @@ export default function Home() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-king-gold hover:bg-king-gold-light disabled:opacity-50 disabled:cursor-not-allowed text-king-green font-black text-lg py-4 rounded-xl shadow-lg transition active:scale-[0.98] flex items-center justify-center gap-2"
+            className="w-full bg-kf-gold hover:bg-kf-gold-dark disabled:opacity-40 disabled:cursor-not-allowed text-black font-bold py-4 rounded-2xl text-base shadow-lg shadow-kf-gold/20 active:scale-[0.98] transition will-change-transform flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
@@ -198,7 +201,7 @@ export default function Home() {
         </form>
       </div>
 
-      <p className="text-xs text-white/40 mt-6 text-center max-w-xs">
+      <p className="text-xs text-white/25 mt-8 text-center max-w-xs">
         Ao participar, você concorda com os termos do sorteio. Guarde seu número!
       </p>
     </div>

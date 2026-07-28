@@ -7,17 +7,16 @@ export default function Success() {
   const state = location.state as { raffleNumber?: string; name?: string } | null
   const [copied, setCopied] = useState(false)
 
-  // Se acessou diretamente sem state, mostra fallback
   if (!state?.raffleNumber) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-5">
-        <Logo className="w-20 h-20 object-contain mb-4" />
-        <p className="text-white/70 text-center mb-4">
+        <Logo className="w-20 h-20 object-contain mb-4 rounded-2xl" />
+        <p className="text-white/50 text-center mb-4 text-sm">
           Nenhum número encontrado. Faça seu cadastro para participar!
         </p>
         <Link
           to="/"
-          className="bg-king-gold text-king-green font-bold px-6 py-3 rounded-xl shadow-lg"
+          className="bg-kf-gold text-black font-bold px-6 py-3 rounded-2xl shadow-lg shadow-kf-gold/20 active:scale-[0.98] transition"
         >
           Voltar ao cadastro
         </Link>
@@ -35,27 +34,26 @@ export default function Success() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-5 py-8">
-      <Logo className="w-20 h-20 object-contain mb-4" />
+      <Logo className="w-20 h-20 object-contain mb-5 rounded-2xl" />
 
-      {/* Card de sucesso */}
-      <div className="w-full max-w-md bg-white/10 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/10 text-center">
+      <div className="w-full max-w-sm text-center animate-slide-up">
         {/* Ícone de sucesso */}
-        <div className="w-16 h-16 bg-king-gold rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-          <svg className="w-9 h-9 text-king-green" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+        <div className="w-14 h-14 bg-kf-gold rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-kf-gold/20">
+          <svg className="w-8 h-8 text-black" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>
 
-        <p className="text-white/90 text-lg mb-2">
+        <p className="text-white/80 text-lg mb-1">
           Parabéns{name ? `, ${name}` : ''}! 🎉
         </p>
-        <p className="text-king-gold font-semibold text-sm mb-4">
+        <p className="text-kf-gold font-semibold text-sm mb-5">
           Seu número do sorteio é:
         </p>
 
         {/* Número grande em destaque */}
-        <div className="animate-pop bg-gradient-to-br from-king-gold to-king-gold-light rounded-2xl py-8 px-4 mb-6 shadow-2xl">
-          <span className="text-7xl font-black text-king-green tracking-wider">
+        <div className="animate-pop bg-gradient-to-br from-kf-gold to-kf-gold-dark rounded-2xl py-10 px-4 mb-6 shadow-2xl shadow-kf-gold/20">
+          <span className="text-7xl font-black text-black tracking-wider">
             {raffleNumber}
           </span>
         </div>
@@ -63,11 +61,11 @@ export default function Success() {
         {/* Botão copiar */}
         <button
           onClick={copyNumber}
-          className="w-full bg-white/15 hover:bg-white/25 border border-white/20 text-white font-semibold py-3.5 rounded-xl transition active:scale-[0.98] flex items-center justify-center gap-2 mb-4"
+          className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold py-3.5 rounded-2xl transition active:scale-[0.98] flex items-center justify-center gap-2 mb-4"
         >
           {copied ? (
             <>
-              <svg className="w-5 h-5 text-king-gold-light" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-kf-gold" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
               Número copiado!
@@ -82,14 +80,14 @@ export default function Success() {
           )}
         </button>
 
-        <p className="text-sm text-white/70">
+        <p className="text-sm text-white/40">
           📱 Guarde esse número e aguarde o sorteio no grupo
         </p>
       </div>
 
       <Link
         to="/"
-        className="mt-6 text-white/50 text-sm hover:text-white/80 transition"
+        className="mt-6 text-white/30 text-sm hover:text-white/60 transition"
       >
         ← Voltar
       </Link>
