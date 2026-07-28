@@ -55,7 +55,12 @@ function corsHeaders() {
   return {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Password'
+    'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Password',
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+    'Vercel-CDN-Cache-Control': 'max-age=0',
+    'CDN-Cache-Control': 'max-age=0',
+    'Pragma': 'no-cache',
+    'Expires': '0'
   }
 }
 
