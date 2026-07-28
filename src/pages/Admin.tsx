@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { supabase, type Participant } from '../lib/supabase'
+import { getAllParticipants, formatPhone, type Participant } from '../lib/db'
 import Logo from '../components/Logo'
 
 /** Senha do admin definida no .env */
@@ -42,13 +42,8 @@ export default function Admin() {
   const loadParticipants = useCallback(async () => {
     setLoading(true)
     try {
-      const { data, error } = await supabase
-        .from('participants')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      setParticipants(data || [])
+      const data = await getAllParticipants()
+      setParticipants(data)
     } catch (err) {
       console.error('Erro ao carregar participantes:', err)
     } finally {
@@ -77,7 +72,6 @@ export default function Admin() {
       const finalWinner = participants[Math.floor(Math.random() * participants.length)]
       setWinner(finalWinner)
       setDrawing(false)
-      // Adicionar ao histórico
       setDrawHistory((prev) => [finalWinner, ...prev])
     }, 2500)
   }
@@ -101,32 +95,6 @@ export default function Admin() {
     link.download = `king-food-sorteio-${new Date().toISOString().slice(0, 10)}.csv`
     link.click()
     URL.revokeObjectURL(url)
-  }
-
-  /** Formatar WhatsApp para exibição */
-  function formatPhone(phone: string): string {
-    const d = phone.replace(/\D/g, '')
-    // EUA/Canadá
-    if (d.length === 11 && d.startsWith('1')) {
-      return `+1 (${d.slice(1, 4)}) ${d.slice(4, 7)}-${d.slice(7)}`
-    }
-    // Brasil
-    if (d.startsWith('55') && d.length >= 12) {
-      const rest = d.slice(2)
-      if (rest.length === 11) return `+55 (${rest.slice(0, 2)}) ${rest.slice(2, 7)}-${rest.slice(7)}`
-      if (rest.length === 10) return `+55 (${rest.slice(0, 2)}) ${rest.slice(2, 6)}-${rest.slice(6)}`
-      return `+55 ${rest}`
-    }
-    // Outros internacionais
-    if (d.length > 10) {
-      if (d.length >= 12) {
-        const cc = d.slice(0, d.length - 10)
-        const rest = d.slice(d.length - 10)
-        return `+${cc} ${rest.slice(0, 3)} ${rest.slice(3, 6)} ${rest.slice(6)}`
-      }
-      return `+${d.slice(0, 2)} ${d.slice(2)}`
-    }
-    return d
   }
 
   /** Filtra participantes pela busca */
