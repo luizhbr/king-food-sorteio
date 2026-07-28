@@ -42,7 +42,7 @@ export default function Admin() {
   const loadParticipants = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await getAllParticipants()
+      const data = await getAllParticipants(ADMIN_PASSWORD)
       setParticipants(data)
     } catch (err) {
       console.error('Erro ao carregar participantes:', err)

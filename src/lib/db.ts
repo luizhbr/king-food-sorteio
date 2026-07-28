@@ -1,11 +1,10 @@
 /**
- * Banco de dados via GitHub Gist.
- * Armazena participantes num JSON em um Gist privado.
- * Funciona sem Supabase, sem servidor, sem configuracao manual.
+ * Cliente da API serverless.
+ * O token do GitHub fica escondido no servidor (Vercel).
+ * O frontend nunca tem acesso ao token.
  */
 
-const GIST_ID = import.meta.env.VITE_GIST_ID as string
-const GIST_TOKEN = import.meta.env.VITE_GIST_TOKEN as string
+const API_URL = '/api'
 
 export interface Participant {
   id: string
@@ -15,68 +14,6 @@ export interface Participant {
   created_at: string
 }
 
-interface DBShape {
-  participants: Participant[]
-}
-
-/** Monta header de autorizacao para GitHub API */
-function authHeader(): string {
-  return 'token ' + GIST_TOKEN
-}
-
-/** Busca o estado atual do banco do Gist */
-async function fetchDB(): Promise<DBShape> {
-  const res = await fetch('https://api.github.com/gists/' + GIST_ID, {
-    headers: {
-      Authorization: authHeader(),
-      Accept: 'application/vnd.github.v3+json'
-    }
-  })
-  if (!res.ok) throw new Error('Gist fetch failed: ' + res.status)
-  const gist = await res.json()
-  const content = gist.files['participants.json']?.content || '{"participants":[]}'
-  return JSON.parse(content)
-}
-
-/** Salva o estado completo do banco no Gist */
-async function saveDB(db: DBShape): Promise<void> {
-  const res = await fetch('https://api.github.com/gists/' + GIST_ID, {
-    method: 'PATCH',
-    headers: {
-      Authorization: authHeader(),
-      Accept: 'application/vnd.github.v3+json',
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      files: {
-        'participants.json': {
-          content: JSON.stringify(db, null, 2)
-        }
-      }
-    })
-  })
-  if (!res.ok) throw new Error('Gist save failed: ' + res.status)
-}
-
-/** Gera UUID simples */
-function uuid(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0
-    const v = c === 'x' ? r : (r & 0x3) | 0x8
-    return v.toString(16)
-  })
-}
-
-/** Gera numero de sorteio unico 001-999 */
-function generateNumber(existing: Participant[]): string {
-  const used = new Set(existing.map((p) => p.raffle_number))
-  for (let i = 0; i < 200; i++) {
-    const num = String(Math.floor(Math.random() * 999) + 1).padStart(3, '0')
-    if (!used.has(num)) return num
-  }
-  throw new Error('Nao foi possivel gerar numero unico')
-}
-
 /** Sanitiza WhatsApp: apenas digitos */
 export function sanitizePhone(value: string): string {
   return value.replace(/\D/g, '')
@@ -84,22 +21,18 @@ export function sanitizePhone(value: string): string {
 
 /**
  * Formata WhatsApp internacional para exibicao
- * +1 (267) 826-5740 / +55 (11) 98765-4321
  */
 export function formatPhone(d: string): string {
   if (!d) return ''
-  // EUA/Canada
   if (d.length === 11 && d.startsWith('1')) {
     return '+1 (' + d.slice(1, 4) + ') ' + d.slice(4, 7) + '-' + d.slice(7)
   }
-  // Brasil
   if (d.startsWith('55') && d.length >= 12) {
     const rest = d.slice(2)
     if (rest.length === 11) return '+55 (' + rest.slice(0, 2) + ') ' + rest.slice(2, 7) + '-' + rest.slice(7)
     if (rest.length === 10) return '+55 (' + rest.slice(0, 2) + ') ' + rest.slice(2, 6) + '-' + rest.slice(6)
     return '+55 ' + rest
   }
-  // Outros
   if (d.length > 10) {
     if (d.length >= 12) {
       const cc = d.slice(0, d.length - 10)
@@ -117,40 +50,37 @@ export function isValidPhone(raw: string): boolean {
   return d.length >= 8 && d.length <= 15
 }
 
-// --- API publica ---
-
+/** Cadastra participante (publico) */
 export async function registerParticipant(
   name: string,
   whatsapp: string
 ): Promise<{ success: true; participant: Participant } | { success: false; existingNumber: string }> {
-  const db = await fetchDB()
+  const res = await fetch(API_URL + '/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, whatsapp })
+  })
 
-  // Verifica duplicidade
-  const existing = db.participants.find((p) => p.whatsapp === whatsapp)
-  if (existing) {
-    return { success: false, existingNumber: existing.raffle_number }
+  const data = await res.json()
+
+  if (data.error) throw new Error(data.error)
+
+  if (data.existingNumber) {
+    return { success: false, existingNumber: data.existingNumber }
   }
 
-  // Gera numero unico
-  const raffle_number = generateNumber(db.participants)
-
-  // Cria participante
-  const participant: Participant = {
-    id: uuid(),
-    name: name.trim(),
-    whatsapp,
-    raffle_number,
-    created_at: new Date().toISOString()
-  }
-
-  // Salva
-  db.participants.push(participant)
-  await saveDB(db)
-
-  return { success: true, participant }
+  return { success: true, participant: data.participant }
 }
 
-export async function getAllParticipants(): Promise<Participant[]> {
-  const db = await fetchDB()
-  return db.participants.sort((a, b) => b.created_at.localeCompare(a.created_at))
+/** Busca todos os participantes (protegido por senha admin) */
+export async function getAllParticipants(adminPassword: string): Promise<Participant[]> {
+  const res = await fetch(API_URL + '/participants', {
+    headers: { 'X-Admin-Password': adminPassword }
+  })
+
+  const data = await res.json()
+
+  if (data.error) throw new Error(data.error)
+
+  return data.participants || []
 }
