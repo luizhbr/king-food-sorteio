@@ -106,15 +106,27 @@ export default function Admin() {
   /** Formatar WhatsApp para exibição */
   function formatPhone(phone: string): string {
     const d = phone.replace(/\D/g, '')
-    if (d.length > 11) {
-      const cc = d.slice(0, d.length - 10)
-      const rest = d.slice(d.length - 10)
-      return `+${cc} ${rest.slice(0, 3)} ${rest.slice(3, 6)} ${rest.slice(6)}`
+    // EUA/Canadá
+    if (d.length === 11 && d.startsWith('1')) {
+      return `+1 (${d.slice(1, 4)}) ${d.slice(4, 7)}-${d.slice(7)}`
     }
-    if (d.length <= 10) {
-      return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`
+    // Brasil
+    if (d.startsWith('55') && d.length >= 12) {
+      const rest = d.slice(2)
+      if (rest.length === 11) return `+55 (${rest.slice(0, 2)}) ${rest.slice(2, 7)}-${rest.slice(7)}`
+      if (rest.length === 10) return `+55 (${rest.slice(0, 2)}) ${rest.slice(2, 6)}-${rest.slice(6)}`
+      return `+55 ${rest}`
     }
-    return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7, 11)}`
+    // Outros internacionais
+    if (d.length > 10) {
+      if (d.length >= 12) {
+        const cc = d.slice(0, d.length - 10)
+        const rest = d.slice(d.length - 10)
+        return `+${cc} ${rest.slice(0, 3)} ${rest.slice(3, 6)} ${rest.slice(6)}`
+      }
+      return `+${d.slice(0, 2)} ${d.slice(2)}`
+    }
+    return d
   }
 
   /** Filtra participantes pela busca */

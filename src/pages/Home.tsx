@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { supabase, type Participant } from '../lib/supabase'
 import Logo from '../components/Logo'
 
@@ -26,25 +26,38 @@ function sanitizePhone(value: string): string {
 }
 
 /**
- * Formata WhatsApp para exibição.
- * Aceita formato internacional (+1 267 826 5740) e brasileiro.
- * Não força máscara rígida — apenas agrupa dígitos.
+ * Formata WhatsApp para exibição — internacional de verdade.
+ * Detecta DDI e formata corretamente para qualquer país.
+ * +1 (EUA): +1 (267) 826-5740
+ * +55 (BR): +55 (11) 98765-4321
  */
 function formatPhoneDisplay(raw: string): string {
   const d = sanitizePhone(raw)
   if (d.length === 0) return ''
-  // Se começa com código do país (mais de 11 dígitos ou + na entrada)
-  if (d.length > 11) {
-    // Formato internacional: +XX XXX XXXXXXX
-    const cc = d.slice(0, d.length - 10)
-    const rest = d.slice(d.length - 10)
-    return `+${cc} ${rest.slice(0, 3)} ${rest.slice(3, 6)} ${rest.slice(6)}`
+
+  // EUA/Canadá: DDI 1, total 11 dígitos (1 + 10)
+  if (d.length === 11 && d.startsWith('1')) {
+    return `+1 (${d.slice(1, 4)}) ${d.slice(4, 7)}-${d.slice(7)}`
   }
-  // Brasil: (11) 98765-4321 ou (11) 3456-7890
-  if (d.length <= 2) return d
-  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`
-  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`
-  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7, 11)}`
+  // Brasil: DDI 55, total 12-13 dígitos
+  if (d.startsWith('55') && d.length >= 12) {
+    const rest = d.slice(2)
+    if (rest.length === 11) return `+55 (${rest.slice(0, 2)}) ${rest.slice(2, 7)}-${rest.slice(7)}`
+    if (rest.length === 10) return `+55 (${rest.slice(0, 2)}) ${rest.slice(2, 6)}-${rest.slice(6)}`
+    return `+55 ${rest}`
+  }
+  // Outros internacionais: mostrar com + e espaços simples
+  if (d.length > 10) {
+    // Tenta separar DDI (2-3 dígitos) do resto
+    if (d.length >= 12) {
+      const cc = d.slice(0, d.length - 10)
+      const rest = d.slice(d.length - 10)
+      return `+${cc} ${rest.slice(0, 3)} ${rest.slice(3, 6)} ${rest.slice(6)}`
+    }
+    return `+${d.slice(0, 2)} ${d.slice(2)}`
+  }
+  // Número curto sem DDI — mostrar como digitado
+  return d
 }
 
 /**
@@ -221,6 +234,14 @@ export default function Home() {
       <p className="text-xs text-white/25 mt-8 text-center max-w-xs">
         Ao participar, você concorda com os termos do sorteio. Guarde seu número!
       </p>
+
+      {/* Link discreto para o painel admin */}
+      <Link
+        to="/admin"
+        className="mt-4 text-[10px] text-white/20 hover:text-white/40 transition"
+      >
+        ⚙ Admin
+      </Link>
     </div>
   )
 }
