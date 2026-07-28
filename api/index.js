@@ -121,6 +121,35 @@ export default async function handler(req) {
       return jsonResponse({ participants: sorted })
     }
 
+    if (path === '/participants' && (req.method === 'POST' || req.method === 'DELETE')) {
+      const adminPwd = req.headers.get('X-Admin-Password') || ''
+      if (adminPwd !== ADMIN_PASSWORD) {
+        return jsonResponse({ error: 'Nao autorizado' }, 401)
+      }
+      let body = {}
+      if (req.method === 'POST') {
+        body = await req.json().catch(() => ({}))
+      } else {
+        const u = new URL(req.url)
+        body.id = u.searchParams.get('id')
+      }
+      const db = await fetchDB()
+
+      if (body.action === 'clear' || (req.method === 'DELETE' && !body.id)) {
+        db.participants = []
+        await saveDB(db)
+        return jsonResponse({ success: true })
+      }
+
+      if ((body.action === 'delete' || req.method === 'DELETE') && body.id) {
+        db.participants = db.participants.filter((p) => p.id !== body.id)
+        await saveDB(db)
+        return jsonResponse({ success: true })
+      }
+
+      return jsonResponse({ error: 'Ação inválida' }, 400)
+    }
+
     return jsonResponse({ error: 'Endpoint nao encontrado' }, 404)
   } catch (err) {
     console.error('API error:', err)
