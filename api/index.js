@@ -51,24 +51,15 @@ function generateNumber(existing) {
   throw new Error('Nao foi possivel gerar numero unico')
 }
 
-function corsHeaders() {
-  return {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Password',
-    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
-    'Vercel-CDN-Cache-Control': 'max-age=0',
-    'CDN-Cache-Control': 'max-age=0',
-    'Pragma': 'no-cache',
-    'Expires': '0'
-  }
-}
-
-function jsonResponse(data, status) {
-  return new Response(JSON.stringify(data), {
-    status: status || 200,
-    headers: Object.assign({ 'Content-Type': 'application/json' }, corsHeaders())
-  })
+function setCors(res) {
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Password')
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0')
+  res.setHeader('Vercel-CDN-Cache-Control', 'max-age=0')
+  res.setHeader('CDN-Cache-Control', 'max-age=0')
+  res.setHeader('Pragma', 'no-cache')
+  res.setHeader('Expires', '0')
 }
 
 function getHeader(req, name) {
@@ -79,9 +70,27 @@ function getHeader(req, name) {
   return req.headers[name.toLowerCase()] || ''
 }
 
-export default async function handler(req) {
+function jsonResponse(res, data, status) {
+  setCors(res)
+  res.statusCode = status || 200
+  res.end(JSON.stringify(data))
+}
+
+async function readBodyJson(req) {
+  return new Promise((resolve) => {
+    let data = ''
+    req.on('data', c => data += c)
+    req.on('end', () => {
+      try { resolve(JSON.parse(data)) } catch { resolve({}) }
+    })
+  })
+}
+
+export default async function handler(req, res) {
+  setCors(res)
   if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: corsHeaders() })
+    res.statusCode = 204
+    return res.end()
   }
 
   const url = new URL(req.url, 'https://kingfoodsorteio.online')
@@ -91,22 +100,22 @@ export default async function handler(req) {
 
   try {
     if (path === '/register' && req.method === 'POST') {
-      const body = await req.json()
+      const body = await readBodyJson(req)
       const name = body.name
       const whatsapp = body.whatsapp
 
       if (!name || name.trim().length < 2) {
-        return jsonResponse({ error: 'Nome invalido' }, 400)
+        return jsonResponse(res, { error: 'Nome invalido' }, 400)
       }
       const cleanPhone = (whatsapp || '').replace(/\D/g, '')
       if (cleanPhone.length < 8 || cleanPhone.length > 15) {
-        return jsonResponse({ error: 'WhatsApp invalido' }, 400)
+        return jsonResponse(res, { error: 'WhatsApp invalido' }, 400)
       }
 
       const db = await fetchDB()
       const existing = db.participants.find(function(p) { return p.whatsapp === cleanPhone })
       if (existing) {
-        return jsonResponse({ existingNumber: existing.raffle_number })
+        return jsonResponse(res, { existingNumber: existing.raffle_number })
       }
 
       const raffle_number = generateNumber(db.participants)
@@ -121,53 +130,52 @@ export default async function handler(req) {
       db.participants.push(participant)
       await saveDB(db)
 
-      return jsonResponse({ success: true, participant: participant })
+      return jsonResponse(res, { success: true, participant: participant })
     }
 
     if (path === '/participants' && req.method === 'GET') {
-      const adminPwd = getHeader(req, 'X-Admin-Password') || ''
+      const adminPwd = getHeader(req, 'X-Admin-Password')
       if (adminPwd !== ADMIN_PASSWORD) {
-        return jsonResponse({ error: 'Nao autorizado' }, 401)
+        return jsonResponse(res, { error: 'Nao autorizado' }, 401)
       }
       const db = await fetchDB()
       const sorted = db.participants.sort(function(a, b) {
         return b.created_at.localeCompare(a.created_at)
       })
-      return jsonResponse({ participants: sorted })
+      return jsonResponse(res, { participants: sorted })
     }
 
     if (path === '/participants' && (req.method === 'POST' || req.method === 'DELETE')) {
-      const adminPwd = getHeader(req, 'X-Admin-Password') || ''
+      const adminPwd = getHeader(req, 'X-Admin-Password')
       if (adminPwd !== ADMIN_PASSWORD) {
-        return jsonResponse({ error: 'Nao autorizado' }, 401)
+        return jsonResponse(res, { error: 'Nao autorizado' }, 401)
       }
       let body = {}
       if (req.method === 'POST') {
-        body = await req.json().catch(() => ({}))
+        body = await readBodyJson(req)
       } else {
-        const u = new URL(req.url)
-        body.id = u.searchParams.get('id')
+        body.id = url.searchParams.get('id')
       }
       const db = await fetchDB()
 
       if (body.action === 'clear' || (req.method === 'DELETE' && !body.id)) {
         db.participants = []
         await saveDB(db)
-        return jsonResponse({ success: true })
+        return jsonResponse(res, { success: true })
       }
 
       if ((body.action === 'delete' || req.method === 'DELETE') && body.id) {
         db.participants = db.participants.filter((p) => p.id !== body.id)
         await saveDB(db)
-        return jsonResponse({ success: true })
+        return jsonResponse(res, { success: true })
       }
 
-      return jsonResponse({ error: 'Ação inválida' }, 400)
+      return jsonResponse(res, { error: 'Ação inválida' }, 400)
     }
 
-    return jsonResponse({ error: 'Endpoint nao encontrado' }, 404)
+    return jsonResponse(res, { error: 'Endpoint nao encontrado' }, 404)
   } catch (err) {
     console.error('API error:', err)
-    return jsonResponse({ error: 'Erro interno: ' + err.message }, 500)
+    return jsonResponse(res, { error: 'Erro interno: ' + err.message }, 500)
   }
 }
