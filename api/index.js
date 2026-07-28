@@ -155,4 +155,4 @@ export default async function handler(req) {
     console.error('API error:', err)
     return jsonResponse({ error: 'Erro interno: ' + err.message }, 500)
   }
-}
+}.
