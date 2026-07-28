@@ -82,7 +82,7 @@ export default function Admin() {
     if (!confirm('Deletar este participante?')) return
     try {
       await deleteParticipant(id, ADMIN_PASSWORD)
-      setParticipants(prev => prev.filter(p => p.id !== id))
+      await loadParticipants()
     } catch (err) {
       alert('Erro ao deletar: ' + (err as Error).message)
     }
@@ -93,7 +93,7 @@ export default function Admin() {
     setConfirmClear(false)
     try {
       await clearAllParticipants(ADMIN_PASSWORD)
-      setParticipants([])
+      await loadParticipants()
       setDrawHistory([])
     } catch (err) {
       alert('Erro ao limpar: ' + (err as Error).message)
