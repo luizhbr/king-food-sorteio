@@ -3,7 +3,7 @@ import { supabase, type Participant } from '../lib/supabase'
 import Logo from '../components/Logo'
 
 /** Senha do admin definida no .env */
-const ADMIN_PASSWORD=import...WORD as string
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD as string
 
 export default function Admin() {
   const [authed, setAuthed] = useState(false)
