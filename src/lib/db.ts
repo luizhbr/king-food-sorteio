@@ -95,3 +95,32 @@ export async function getAllParticipants(adminPassword: string): Promise<Partici
 
   return data.participants || []
 }
+/** Deleta um participante específico */
+export async function deleteParticipant(id: string, adminPassword: string): Promise<void> {
+  const res = await fetch(API_URL + '/participants', {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      'X-Admin-Password': adminPassword 
+    },
+    body: JSON.stringify({ action: 'delete', id })
+  })
+
+  const data = await res.json()
+  if (data.error) throw new Error(data.error)
+}
+
+/** Limpa todos os participantes */
+export async function clearAllParticipants(adminPassword: string): Promise<void> {
+  const res = await fetch(API_URL + '/participants', {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      'X-Admin-Password': adminPassword 
+    },
+    body: JSON.stringify({ action: 'clear' })
+  })
+
+  const data = await res.json()
+  if (data.error) throw new Error(data.error)
+}

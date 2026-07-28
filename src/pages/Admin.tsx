@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { getAllParticipants, formatPhone, type Participant } from '../lib/db'
+import { getAllParticipants, deleteParticipant, clearAllParticipants, formatPhone, type Participant } from '../lib/db'
 import Logo from '../components/Logo'
 
 /** Senha do admin definida no .env */
@@ -16,6 +16,7 @@ export default function Admin() {
   const [drawing, setDrawing] = useState(false)
   const [search, setSearch] = useState('')
   const [confirmDraw, setConfirmDraw] = useState(false)
+  const [confirmClear, setConfirmClear] = useState(false)
   const [drawHistory, setDrawHistory] = useState<Participant[]>([])
 
   useEffect(() => {
@@ -76,7 +77,30 @@ export default function Admin() {
     }, 2500)
   }
 
-  /** Exportar CSV */
+  /** Deleta um participante */
+  async function handleDelete(id: string) {
+    if (!confirm('Deletar este participante?')) return
+    try {
+      await deleteParticipant(id, ADMIN_PASSWORD)
+      setParticipants(prev => prev.filter(p => p.id !== id))
+    } catch (err) {
+      alert('Erro ao deletar: ' + (err as Error).message)
+    }
+  }
+
+  /** Limpa todos os participantes */
+  async function handleClearAll() {
+    setConfirmClear(false)
+    try {
+      await clearAllParticipants(ADMIN_PASSWORD)
+      setParticipants([])
+      setDrawHistory([])
+    } catch (err) {
+      alert('Erro ao limpar: ' + (err as Error).message)
+    }
+  }
+
+    /** Exportar CSV */
   function exportCSV() {
     const header = 'Nome,WhatsApp,Numero,Data\n'
     const rows = participants
@@ -181,7 +205,48 @@ export default function Admin() {
         >
           📥 Exportar CSV
         </button>
+
+        <button
+          onClick={() => setConfirmClear(true)}
+          disabled={participants.length === 0}
+          className="bg-red-500/20 hover:bg-red-500/30 disabled:opacity-30 border border-red-500/40 text-red-300 font-bold py-5 rounded-2xl transition flex items-center justify-center gap-2"
+        >
+          🗑️ Limpar Tudo
+        </button>
       </div>
+
+      {/* Modal de confirmação - limpar tudo */}
+      {confirmClear && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-5"
+          onClick={() => setConfirmClear(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl border border-red-500/30 bg-neutral-900 p-6 text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-2xl mb-2">⚠️</p>
+            <p className="text-lg font-bold mb-2">Limpar todos os participantes?</p>
+            <p className="text-sm text-white/50 mb-5">
+              Isso vai deletar {participants.length} participantes. Esta ação não pode ser desfeita.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmClear(false)}
+                className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-medium py-3 rounded-2xl transition"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleClearAll}
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-2xl shadow-lg shadow-red-500/20 active:scale-[0.98] transition"
+              >
+                Limpar Tudo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de confirmação do sorteio */}
       {confirmDraw && (
@@ -322,6 +387,14 @@ export default function Admin() {
                   <p className="font-semibold truncate">{p.name}</p>
                   <p className="text-xs text-white/40">{formatPhone(p.whatsapp)}</p>
                 </div>
+                <button
+                  onClick={() => handleDelete(p.id)}
+                  className="w-9 h-9 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 flex items-center justify-center transition active:scale-90"
+                  aria-label="Deletar participante"
+                  title="Deletar"
+                >
+                  🗑️
+                </button>
                 <div className="text-right">
                   <span className="text-lg font-black text-kf-gold">
                     {p.raffle_number}
