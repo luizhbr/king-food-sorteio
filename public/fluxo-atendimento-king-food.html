@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fluxo de Atendimento - King Food</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #fff8f0;
+      color: #2d2d2d;
+    }
+    .slide {
+      width: 100%;
+      max-width: 900px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+    .slide-header {
+      background: linear-gradient(135deg, #ff6b00, #ff9f00);
+      padding: 30px 40px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .slide-header img {
+      width: 60px;
+      height: 60px;
+      border-radius: 12px;
+      background: #fff;
+      padding: 5px;
+    }
+    .slide-header h1 {
+      color: #fff;
+      font-size: 24px;
+      font-weight: 800;
+    }
+    .slide-header p {
+      color: rgba(255,255,255,0.9);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+    .slide-body { padding: 30px 40px; }
+    .slide-footer {
+      background: #fff8f0;
+      padding: 12px 40px;
+      font-size: 12px;
+      color: #999;
+      text-align: center;
+    }
+
+    /* Slide 2 - Arquitetura */
+    .arch-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .arch-card {
+      background: #fff8f0;
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      border: 2px solid transparent;
+      transition: all 0.3s;
+    }
+    .arch-card:hover {
+      border-color: #ff6b00;
+      transform: translateY(-4px);
+    }
+    .arch-icon {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #ff6b00, #ff9f00);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 14px;
+      font-size: 26px;
+    }
+    .arch-card h3 { font-size: 16px; margin-bottom: 8px; color: #2d2d2d; }
+    .arch-card p { font-size: 13px; color: #777; line-height: 1.5; }
+    .arch-card .tag {
+      display: inline-block;
+      background: #fff;
+      border: 1px solid #ff6b00;
+      color: #ff6b00;
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-top: 10px;
+      font-weight: 600;
+    }
+
+    /* Slide 3 - Fluxo */
+    .flow-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-top: 20px;
+    }
+    .flow-step {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      position: relative;
+    }
+    .flow-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 27px;
+      top: 60px;
+      width: 2px;
+      height: 28px;
+      background: linear-gradient(to bottom, #ff6b00, #ff9f00);
+    }
+    .flow-num {
+      width: 56px;
+      height: 56px;
+      min-width: 56px;
+      background: linear-gradient(135deg, #ff6b00, #ff9f00);
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 800;
+      z-index: 1;
+    }
+    .flow-content {
+      background: #fff8f0;
+      border-radius: 14px;
+      padding: 16px 20px;
+      flex: 1;
+      border-left: 4px solid #ff6b00;
+    }
+    .flow-content h3 { font-size: 15px; margin-bottom: 4px; }
+    .flow-content p { font-size: 13px; color: #777; }
+    .flow-content . интеграция { font-size: 11px; color: #ff6b00; font-weight: 600; margin-top: 4px; }
+
+    /* Slide 4 - Fluxo Visual Completo */
+    .flow-visual {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .flow-col {
+      background: #fff8f0;
+      border-radius: 16px;
+      padding: 20px 16px;
+      text-align: center;
+    }
+    .flow-col h4 {
+      background: linear-gradient(135deg, #ff6b00, #ff9f00);
+      color: #fff;
+      font-size: 13px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      margin-bottom: 14px;
+    }
+    .flow-item {
+      background: #fff;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+      font-size: 13px;
+      color: #555;
+      border: 1px solid #eee;
+    }
+    .flow-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: #ff6b00;
+    }
+
+    /* Slide 5 - N8N Nodes */
+    .node-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .node-card {
+      background: #fff8f0;
+      border-radius: 14px;
+      padding: 20px;
+      border-left: 4px solid #ff6b00;
+    }
+    .node-card h4 { font-size: 14px; margin-bottom: 6px; color: #2d2d2d; }
+    .node-card p { font-size: 13px; color: #777; line-height: 1.5; }
+    .node-card .node-name {
+      display: inline-block;
+      background: linear-gradient(135deg, #ff6b00, #ff9f00);
+      color: #fff;
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    /* Slide 6 - Custos */
+    .cost-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .cost-table th {
+      background: linear-gradient(135deg, #ff6b00, #ff9f00);
+      color: #fff;
+      padding: 14px 20px;
+      text-align: left;
+      font-size: 14px;
+    }
+    .cost-table td {
+      padding: 14px 20px;
+      font-size: 14px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .cost-table tr:nth-child(even) { background: #fff8f0; }
+    .cost-table .check { color: #22c55e; font-weight: bold; }
+    .cost-table .x { color: #ef4444; font-weight: bold; }
+    .cost-table .price { font-weight: 700; color: #ff6b00; }
+
+    /* Slide 7 - Cronograma */
+    .timeline {
+      margin-top: 24px;
+      position: relative;
+      padding-left: 30px;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 10px;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: linear-gradient(to bottom, #ff6b00, #ff9f00);
+      border-radius: 3px;
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: 24px;
+    }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -24px;
+      top: 4px;
+      width: 14px;
+      height: 14px;
+      background: #ff6b00;
+      border-radius: 50%;
+      border: 3px solid #fff8f0;
+    }
+    .timeline-item h4 { font-size: 15px; margin-bottom: 4px; }
+    .timeline-item p { font-size: 13px; color: #777; }
+    .timeline-item .days { font-size: 12px; color: #ff6b00; font-weight: 600; background: #fff0e0; padding: 2px 10px; border-radius: 20px; display: inline-block; margin-top: 6px; }
+
+    /* Slide 8 - Próximos Passos */
+    .action-list {
+      margin-top: 20px;
+    }
+    .action-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #fff8f0;
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin-bottom: 12px;
+      border: 2px solid transparent;
+    }
+    .action-item:hover { border-color: #ff6b00; }
+    .action-num {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #ff6b00, #ff9f00);
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .action-text h4 { font-size: 15px; margin-bottom: 2px; }
+    .action-text p { font-size: 13px; color: #777; }
+    .action-status {
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 600;
+      color: #ff6b00;
+      background: #fff0e0;
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    .logo-placeholder {
+      width: 60px;
+      height: 60px;
+      background: #fff;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: #ff6b00;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+<!-- SLIDE 1 - CAPA -->
+<div class="slide">
+  <div class="slide-header">
+    <img src="https://king-food-sorteio.vercel.app/logo-kingfood.png.png" onerror="this.style.display='none'" alt="King Food">
+    <div>
+      <h1>🏆 Fluxo de Atendimento Automatizado</h1>
+      <p>King Food — Integração N8N + WhatsApp + Olaclick</p>
+    </div>
+  </div>
+  <div class="slide-body" style="text-align:center; padding: 50px 40px;">
+    <div style="font-size: 80px; margin-bottom: 20px;">🍔</div>
+    <h2 style="font-size: 28px; margin-bottom: 12px; color: #2d2d2d;">Atendimento 24/7 com IA</h2>
+    <p style="font-size: 16px; color: #777; max-width: 500px; margin: 0 auto; line-height: 1.7;">
+      Automation flow que integra Olaclick, WhatsApp e N8N para atender clientes automaticamente, qualificar leads e aumentar suas vendas.
+    </p>
+    <div style="margin-top: 40px; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+      <div style="background:#fff8f0; padding:16px 28px; border-radius:14px; border:2px solid #ff6b00;">
+        <div style="font-size:22px; font-weight:800; color:#ff6b00;">N8N</div>
+        <div style="font-size:12px; color:#777;">Workflow Engine</div>
+      </div>
+      <div style="background:#fff8f0; padding:16px 28px; border-radius:14px; border:2px solid #ff6b00;">
+        <div style="font-size:22px; font-weight:800; color:#ff6b00;">WhatsApp</div>
+        <div style="font-size:12px; color:#777;">Canal de Atendimento</div>
+      </div>
+      <div style="background:#fff8f0; padding:16px 28px; border-radius:14px; border:2px solid #ff6b00;">
+        <div style="font-size:22px; font-weight:800; color:#ff6b00;">Olaclick</div>
+        <div style="font-size:12px; color:#777;">Plataforma de Leads</div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer">King Food — Fluxo de Atendimento 2026</div>
+</div>
+
+<!-- SLIDE 2 - ARQUITETURA -->
+<div class="slide">
+  <div class="slide-header">
+    <img src="https://king-food-sorteio.vercel.app/logo-kingfood.png.png" onerror="this.style.display='none'" alt="King Food">
+    <div>
+      <h1>⚙️ Arquitetura da Integração</h1>
+      <p>Como as 3 ferramentas se conectam</p>
+    </div>
+  </div>
+  <div class="slide-body">
+    <div class="arch-grid">
+      <div class="arch-card">
+        <div class="arch-icon">📱</div>
+        <h3>WhatsApp</h3>
+        <p>Canal onde o cliente envia mensagens e recebe respostas automáticas</p>
+        <span class="tag">Entrada/Saída</span>
+      </div>
+      <div class="arch-card">
+        <div class="arch-icon">🔄</div>
+        <h3>N8N</h3>
+        <p>Motor de automação que orchestra todo o fluxo, decisões e integrações</p>
+        <span class="tag">Cérebro</span>
+      </div>
+      <div class="arch-card">
+        <div class="arch-icon">🎯</div>
+        <h3>Olaclick</h3>
+        <p>Captura cliques, gera leads e alimenta o fluxo com dados do cliente</p>
+        <span class="tag">Fonte de Leads</span>
+      </div>
+    </div>
+    <div style="background:#fff0e0; border-radius:14px; padding:20px; margin-top:24px; text-align:center;">
+      <p style="font-size:14px; color:#2d2d2d;">
+        <strong style="color:#ff6b00;">Fluxo:</strong> Cliente clica no Olaclick → N8N recebe webhook → N8N envia mensagem WhatsApp → Cliente é atendido 24/7
+      </p>
+    </div>
+  </div>
+  <div class="slide-footer">King Food — Fluxo de Atendimento 2026</div>
+</div>
+
+<!-- SLIDE 3 - FLUXO PASSO A PASSO -->
+<div class="slide">
+  <div class="slide-header">
+    <img src="https://king-food-sorteio.vercel.app/logo-kingfood.png.png" onerror="this.style.display='none'" alt="King Food">
+    <div>
+      <h1>📋 Fluxo de Atendimento Passo a Passo</h1>
+      <p>O que acontece desde o clique até a venda fechada</p>
+    </div>
+  </div>
+  <div class="slide-body">
+    <div class="flow-container">
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-content">
+          <h3>🔗 Cliente clica no Olaclick</h3>
+          <p>Lead interage com link/cta no Olaclick</p>
+          <div class=" интеграция">📡 Olaclick → Webhook N8N</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-content">
+          <h3>🧠 N8N recebe e processa</h3>
+          <p>Workflow identifica o lead, captura dados e decide próxima ação</p>
+          <div class=" интеграция">⚙️ N8N Processamento</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-content">
+          <h3>💬 WhatsApp: Welcome Message</h3>
+          <p>Mensagem de boas-vindas automática enviada em segundos</p>
+          <div class=" интеграция">📱 N8N → WhatsApp API</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">4</div>
+        <div class="flow-content">
+          <h3>🎯 Qualificação do Lead</h3>
+          <p>Sistema faz perguntas-chave: interesse, localização, urgência</p>
+          <div class=" интеграция">🤖 Resposta IA / Árvore de Decisão</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">5</div>
+        <div class="flow-content">
+          <h3>📦 Apresentação de Opções</h3>
+          <p>Cardápio, promoções ou atendimento humano conforme perfil</p>
+          <div class=" интеграция">📋 Dados do Olaclick + N8N</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">6</div>
+        <div class="flow-content">
+          <h3>✅ Conversão / Encaminhamento</h3>
+          <p>Venda fechada no WhatsApp ou encaminhamento para atendente</p>
+          <div class=" интеграция">💰 Checkout → King Food</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer">King Food — Fluxo de Atendimento 2026</div>
+</div>
+
+<!-- SLIDE 4 - VISUAL DO FLUXO -->
+<div class="slide">
+  <div class="slide-header">
+    <img src="https://king-food-sortefood.png.png" onerror="this.style.display='none'" alt="King Food">
+    <div>
+      <h1>🔀 Mapa Visual do Fluxo</h1>
+      <p>Visão geral de todas as etapas e conexões</p>
+    </div>
+  </div>
+  <div class="slide-body">
+    <div class="flow-visual">
+      <div class="flow-col">
+        <h4>🔗 ORIGEM</h4>
+        <div class="flow-item">🍔 Clique Olaclick</div>
+        <div class="flow-item">📱 Formulário</div>
+        <div class="flow-item">📲 WhatsApp direto</div>
+        <div class="flow-item">🌐 Site King Food</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-col">
+        <h4>⚙️ N8N</h4>
+        <div class="flow-item">📥 Webhook</div>
+        <div class="flow-item">🔍 Classificar</div>
+        <div class="flow-item">💾 Salvar dados</div>
+        <div class="flow-item">🔀 Decidir rota</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-col">
+        <h4>💬 WHATSAPP</h4>
+        <div class="flow-item">👋 Boas-vindas</div>
+        <div class="flow-item">❓ Qualificação</div>
+        <div class="flow-item">📋 Menu/Ofertas</div>
+        <div class="flow-item">✅ Confirmação</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-col">
+        <h4>🎯 RESULTADO</h4>
+        <div class="flow-item">🛒 Pedido feito</div>
+        <div class="flow-item">📞 Atendente</div>
+        <div class="flow-item">📧 Lead gravado</div>
+        <div class="flow-item">🔄 Recuperação</div>
+      </div>
+    </div>
+    <div style="background:#fff0e0; border-radius:14px; padding:16px 20px; margin-top:24px;">
+      <p style="font-size:13px; color:#555; line-height:1.7;">
+        <strong style="color:#ff6b00;">💡 Fluxo inteligente:</strong> Se o cliente não responde em 30min, N8N envia follow-up. Se não converte em 24h, entra em fluxo de recuperação com oferta especial.
+      </p>
+    </div>
+  </div>
+  <div class="slide-footer">King Food — Fluxo de Atendimento 2026</div>
+</div>
+
+<!-- SLIDE 5 - NODES N8N -->
+<div class="slide">
+  <div class="slide-header">
+    <img src="https://king-food-sorteio.vercel.app/logo-kingfood.png.png" onerror="this.style.display='none'" alt="King Food">
+    <div>
+      <h1>🔧 Nodes do N8N (Workflow)</h1>
+      <p>Cada bloco é um passo no fluxo automatizado</p>
+    </div>
+  </div>
+  <div class="slide-body">
+    <div class="node-grid">
+      <div class="node-card">
+        <span class="node-name">TRIGGER</span>
+        <h4>Webhook / Olaclick</h4>
+        <p>Recebe dados do lead automaticamente quando alguém clica no Olaclick</p>
+      </div>
+      <div class="node-card">
+        <span class="node-name">AÇÃO</span>
+        <h4>WhatsApp Send Message</h4>
+        <p>Envia mensagem personalizada usando a API do WhatsApp Business</p>
+      </div>
+      <div class="node-card">
+        <span class="node-name">LÓGICA</span>
+        <h4>IF / Switch</h4>
+        <p>Divide o fluxo conforme resposta do cliente: qualificado / não qualificado / sem resposta</p>
+      </div>
+      <div class="node-card">
+        <span class="node-name">AÇÃO</span>
+        <h4>Google Sheets / CRM</h4>
+        <p>Salva lead com nome, telefone, interesse, data e status da conversa</p>
+      </div>
+      <div class="node-card">
+        <span class="node-name">AÇÃO</span>
+        <h4>Delay / Follow-up</h4>
+        <p>Espera X minutos/horas e envia nova mensagem se cliente não respondeu</p>
+      </div>
+      <div class="node-card">
+        <span class="node-name">AÇÃO</span>
+        <h4>HTTP Request</h4>
+        <p>Busca dados extras do Olaclick, cardápio ou sistema King Food via API</p>
+      </div>
+      <div class="node-card">
+        <span class="node-name">AÇÃO</span>
+        <h4>Telegram / Notificação</h4>
+        <p>Envia alerta para você quando um lead quente precisa de atenção humana</p>
+      </div>
+      <div class="node-card">
+        <span class="node-name">LÓGICA</span>
+        <h4>AI Agent (Opcional)</h4>
+        <p>Usa IA para entender mensagens livres e responder de forma natural</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer">King Food — Fluxo de Atendimento 2026</div>
+</div>
+
+<!-- SLIDE 6 - CUSTOS -->
+<div class="slide">
+  <div class="slide-header">
+    <img src="https://king-food-sorteio.vercel.app/logo-kingfood.png.png" onerror="this.style.display='none'" alt="King Food">
+    <div>
+      <h1>💰 Custos e Investimentos</h1>
+      <p>O que você gasta para manter o fluxo rodando</p>
+    </div>
+  </div>
+  <div class="slide-body" style="padding-bottom: 30px;">
+    <table class="cost-table">
+      <thead>
+        <tr>
+          <th>Ferramenta</th>
+          <th>Plano</th>
+          <th>Preço</th>
+          <th>Função no Fluxo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>N8N Cloud</strong></td>
+          <td>Free (100 workflows)</td>
+          <td class="price">R$ 0</td>
+          <td>Motor de automação</td>
+        </tr>
+        <tr>
+          <td><strong>WhatsApp Business API</strong></td>
+          <td>Pay per message</td>
+          <td class="price">~R$ 0,05 a R$ 0,30 por msg</td>
+          <td>Canal de mensagens</td>
+        </tr>
+        <tr>
+          <td><strong>Olaclick</strong></td>
+          <td>Plano pago</td>
+          <td class="price">A definir</td>
+          <td>Captura de leads</td>
+        </tr>
+        <tr>
+          <td><strong>Google Sheets</strong></td>
+          <td>Free</td>
+          <td class="price">R$ 0</td>
+          <td>CRM / Banco de dados</td>
+        </tr>
+        <tr>
+          <td><strong>Telegram (alertas)</strong></td>
+          <td>Free</td>
+          <td class="price">R$ 0</td>
+          <td>Notificações pra você</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="background:#fff0e0; border-radius:14px; padding:18px 20px; margin-top:20px;">
+      <p style="font-size:14px; color:#2d2d2d;">
+        <strong style="color:#ff6b00;">💡 Dica:</strong> Comece com N8N Cloud free + WhatsApp Business API (Twilio ou Z-API). Custo inicial próximo de R$ 0. Escala conforme suas vendas crescem.
+      </p>
+    </div>
+  </div>
+  <div class="slide-footer">King Food — Fluxo de Atendimento 2026</div>
+</div>
+
+<!-- SLIDE 7 - CRONOGRAMA -->
+<div class="slide">
+  <div class="slide-header">
+    <img src="https://king-food-sorteio.vercel.app/logo-kingfood.png.png" onerror="this.style.display='none'" alt="King Food">
+    <div>
+      <h1>📅 Cronograma de Implementação</h1>
+      <p>Quanto tempo cada etapa demora</p>
+    </div>
+  </div>
+  <div class="slide-body">
+    <div class="timeline">
+      <div class="timeline-item">
+        <h4>🚦 Setup Inicial (Dia 1-2)</h4>
+        <p>Conta N8N Cloud + Configurar WhatsApp API (Twilio ou Z-API) + Acesso Olaclick</p>
+        <span class="days">⏱️ 2 dias</span>
+      </div>
+      <div class="timeline-item">
+        <h4>🔧 Workflow Base (Dia 3-5)</h4>
+        <p>Criar webhook Olaclick → N8N → WhatsApp. Fluxo básico de boas-vindas funcionando</p>
+        <span class="days">⏱️ 3 dias</span>
+      </div>
+      <div class="timeline-item">
+        <h4>🧠 Fluxo de Qualificação (Dia 6-8)</h4>
+        <p>Árvore de decisão: perguntas → segmentação → encaminhamento automático</p>
+        <span class="days">⏱️ 3 dias</span>
+      </div>
+      <div class="timeline-item">
+        <h4>📊 CRM + Follow-up (Dia 9-11)</h4>
+        <p>Google Sheets como CRM, fluxo de follow-up automático (30min, 24h, 48h)</p>
+        <span class="days">⏱️ 3 dias</span>
+      </div>
+      <div class="timeline-item">
+        <h4>🧪 Testes + Ajustes (Dia 12-14)</h4>
+        <p>Testar com clientes reais, ajustar mensagens, refinar qualificação</p>
+        <span class="days">⏱️ 3 dias</span>
+      </div>
+      <div class="timeline-item">
+        <h4>🚀 Go Live (Dia 15+)</h4>
+        <p>Fluxo no ar 24/7. Acompanhar métricas e otimizar</p>
+        <span class="days">✅ Pronto</span>
+      </div>
+    </div>
+    <div style="background:#fff0e0; border-radius:14px; padding:18px 20px; margin-top:24px; text-align:center;">
+      <p style="font-size:15px; color:#2d2d2d;">
+        <strong style="color:#ff6b00;">⏱️ Total estimado: ~2 semanas</strong> do zero até operação completa
+      </p>
+    </div>
+  </div>
+  <div class="slide-footer">King Food — Fluxo de Atendimento 2026</div>
+</div>
+
+<!-- SLIDE 8 - PRÓXIMOS PASSOS -->
+<div class="slide">
+  <div class="slide-header">
+    <img src="https://king-food-sorteio.vercel.app/logo-kingfood.png.png" onerror="this.style.display='none'" alt="King Food">
+    <div>
+      <h1>✅ Próximos Passos</h1>
+      <p>O que você precisa fazer agora para começar</p>
+    </div>
+  </div>
+  <div class="slide-body">
+    <div class="action-list">
+      <div class="action-item">
+        <div class="action-num">1</div>
+        <div class="action-text">
+          <h4>Criar conta N8N Cloud</h4>
+          <p>n8n.io — plano free é suficiente pra começar</p>
+        </div>
+        <span class="action-status">Pendente</span>
+      </div>
+      <div class="action-item">
+        <div class="action-num">2</div>
+        <div class="action-text">
+          <h4>Escolher API WhatsApp</h4>
+          <p>Twilio (global, fácil) ou Z-API (brasileiro, suporte PT)</p>
+        </div>
+        <span class="action-status">Pendente</span>
+      </div>
+      <div class="action-item">
+        <div class="action-num">3</div>
+        <div class="action-text">
+          <h4>Verificar acesso Olaclick API</h4>
+          <p>Pedir documentação/endpoints para o suporte Olaclick</p>
+        </div>
+        <span class="action-status">Pendente</span>
+      </div>
+      <div class="action-item">
+        <div class="action-num">4</div>
+        <div class="action-text">
+          <h4>Definir fluxo de mensagens</h4>
+          <p>Me manda as mensagens que quer enviar: welcome, qualificação, ofertas</p>
+        </div>
+        <span class="action-status">Pendente</span>
+      </div>
+      <div class="action-item">
+        <div class="action-num">5</div>
+        <div class="action-text">
+          <h4>Eu monto o N8N workflow</h4>
+          <p>Com as infos acima eu construo o fluxo completo e te entrego pronto</p>
+        </div>
+        <span class="action-status">Aguardando</span>
+      </div>
+    </div>
+    <div style="background: linear-gradient(135deg, #ff6b00, #ff9f00); border-radius:14px; padding:22px 24px; margin-top:24px; text-align:center;">
+      <p style="font-size:15px; color:#fff; line-height:1.7;">
+        🏆 <strong>Resultado esperado:</strong> Atender 100% dos leads Olaclick instantaneamente, mesmo de madrugada. Aumentar conversão com follow-up automático e qualificação prévia.
+      </p>
+    </div>
+  </div>
+  <div class="slide-footer">King Food — Fluxo de Atendimento 2026</div>
+</div>
+
+</body>
+</html>
